@@ -54,4 +54,4 @@ uasort($filas, fn($x,$y)=>[$x['curso'],-$x['total']]<=>[$y['curso'],-$y['total']
       </tbody>
     </table>
   </div>
-</div></body></html>
+</div></body></html> 

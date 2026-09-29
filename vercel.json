@@ -1,8 +1,13 @@
 {
-  "functions": {
-    "*.php": { "runtime": "vercel-php@0.7.4" }
+  "$schema": "https://vercel.sh",
+  "services": {
+    "web-php": {
+      "root": ".",
+      "entrypoint": "Dockerfile.vercel",
+      "runtime": "container"
+    }
   },
-  "routes": [
-    { "src": "/(.*)", "dest": "/$1" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": { "service": "web-php" } }
   ]
 }

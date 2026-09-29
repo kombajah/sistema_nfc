@@ -1,0 +1,7 @@
+FROM dunglas/frankenphp:latest
+
+# Instala las extensiones de MySQL nativas
+RUN docker-php-ext-install pdo pdo_mysql
+
+# Copia los archivos del repositorio al contenedor
+COPY . /app/public

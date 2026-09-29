@@ -68,3 +68,11 @@ CREATE TABLE canjes (
   fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (alumno_id) REFERENCES alumnos(id) ON DELETE CASCADE
 );
+
+-- Sesiones persistentes en base de datos (necesario en hosting serverless como Vercel,
+-- donde el sistema de archivos no se comparte entre invocaciones).
+CREATE TABLE IF NOT EXISTS sesiones (
+  id VARCHAR(128) PRIMARY KEY,
+  datos MEDIUMTEXT NOT NULL,
+  expira DATETIME NOT NULL
+);

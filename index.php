@@ -1,6 +1,6 @@
 <?php
-session_start();
 require 'conexion.php';
+iniciar_sesion();
 if (isset($_SESSION['maestro'])) { header("Location: reporte.php"); exit; }
 $error = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!DOCTYPE html><html lang="es"><head><title>Login - Sistema NFC</title><?php include 'head.php'; ?></head>
 <body class="bg-light d-flex align-items-center vh-100">
 <div class="container text-center" style="max-width:400px">
-  <h2 class="mb-4 text-primary">LaProfeQueLeDicen</h2>
+  <h2 class="mb-4 text-primary">Login Docente</h2>
   <form method="POST" class="card p-4 shadow-sm">
     <?php if($error) echo "<div class='alert alert-danger'>".h($error)."</div>"; ?>
     <input type="text" name="usuario" class="form-control mb-3" placeholder="Usuario" required>

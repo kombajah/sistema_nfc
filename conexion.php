@@ -1,5 +1,5 @@
 <?php
-// --- Habilitar visualización de errores (Depuración) ---
+// --- Depuración de errores ---
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -32,7 +32,7 @@ try {
 
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-// --- Manejo de sesiones en la base de datos usando PDO ---
+// --- Manejador de Sesiones en Base de Datos ---
 class SesionBD implements SessionHandlerInterface {
     private $pdo;
 
@@ -45,35 +45,61 @@ class SesionBD implements SessionHandlerInterface {
 
     public function read($id): string|false {
         if (!$this->pdo) return '';
-        $s = $this->pdo->prepare("SELECT datos FROM sesiones WHERE id=? AND expira > NOW()");
-        $s->execute([$id]);
-        $r = $s->fetch(PDO::FETCH_ASSOC);
-        return $r ? $r['datos'] : '';
+        try {
+            $s = $this->pdo->prepare("SELECT datos FROM sesiones WHERE id = ? AND expira > NOW()");
+            $s->execute([$id]);
+            $r = $s->fetch(PDO::FETCH_ASSOC);
+            return $r ? (string)$r['datos'] : '';
+        } catch (Exception $e) {
+            return '';
+        }
     }
 
     public function write($id, $datos): bool {
         if (!$this->pdo) return false;
-        $exp = date('Y-m-d H:i:s', time() + 7200); // 2 horas de inactividad
-        $s = $this->pdo->prepare("INSERT INTO sesiones (id,datos,expira) VALUES (?,?,?) ON DUPLICATE KEY UPDATE datos=VALUES(datos), expira=VALUES(expira)");
-        return $s->execute([$id, $datos, $exp]);
+        try {
+            $exp = date('Y-m-d H:i:s', time() + 7200); // 2 horas
+            $s = $this->pdo->prepare("INSERT INTO sesiones (id, datos, expira) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE datos = VALUES(datos), expira = VALUES(expira)");
+            return $s->execute([$id, $datos, $exp]);
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     public function destroy($id): bool {
         if (!$this->pdo) return false;
-        $s = $this->pdo->prepare("DELETE FROM sesiones WHERE id=?");
-        return $s->execute([$id]);
+        try {
+            $s = $this->pdo->prepare("DELETE FROM sesiones WHERE id = ?");
+            return $s->execute([$id]);
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     public function gc($max_lifetime): int|false {
         if (!$this->pdo) return 0;
-        $this->pdo->exec("DELETE FROM sesiones WHERE expira < NOW()");
-        return 0;
+        try {
+            $this->pdo->exec("DELETE FROM sesiones WHERE expira < NOW()");
+            return 0;
+        } catch (Exception $e) {
+            return 0;
+        }
     }
 }
 
 function iniciar_sesion(){
     global $conexion;
     if (session_status() === PHP_SESSION_NONE) {
+        // Configuración de cookies segura para HTTPS / Vercel
+        session_set_cookie_params([
+            'lifetime' => 7200,
+            'path' => '/',
+            'domain' => '',
+            'secure' => true,      // HTTPS en Vercel
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+
         if ($conexion) {
             session_set_save_handler(new SesionBD($conexion), true);
         }
@@ -83,7 +109,7 @@ function iniciar_sesion(){
 
 function requiere_login(){
     iniciar_sesion();
-    if (!isset($_SESSION['maestro'])) { 
+    if (empty($_SESSION['maestro'])) { 
         header("Location: index.php"); 
         exit; 
     }

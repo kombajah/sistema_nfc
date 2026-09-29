@@ -7,21 +7,27 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 // y completa ahí tus datos; se carga automáticamente si existe.
 if (file_exists(__DIR__ . '/config.local.php')) require __DIR__ . '/config.local.php';
 
-$DB_HOST = getenv('DB_HOST') ?: 'mysql-sistema-nfc-sistema-nfc.d.aivencloud.com';
-$DB_PORT = (int)(getenv('DB_PORT') ?: 18347);
-$DB_NAME = getenv('DB_NAME') ?: 'sistema_nfc';
-$DB_USER = getenv('DB_USER') ?: 'avnadmin';
-$DB_PASS = getenv('DB_PASS') ?: 'AVNS_BRrEC3htryct3nJ2wUl';
-$DB_CA   = __DIR__ . '/certs/ca.pem';
+// Obtener variables de entorno (soporta getenv y $_ENV)
+$host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? '');
+$port = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '18347');
+$db   = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? '');
+$user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? '');
+$pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? '');
 
 try {
-  $conn = mysqli_init();
-  $conn->ssl_set(null, null, $DB_CA, null, null);
-  $conn->real_connect($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME, $DB_PORT, null, MYSQLI_CLIENT_SSL);
-  $conn->set_charset('utf8mb4');
-} catch (mysqli_sql_exception $e) {
-  http_response_code(500);
-  die("No se pudo conectar a la base de datos. Revisa las variables de entorno DB_HOST/DB_PORT/DB_USER/DB_PASS/DB_NAME y que certs/ca.pem esté presente.");
+    $options = [
+        // Habilita SSL obligatorio requerido por Aiven
+        PDO::MYSQL_ATTR_SSL_CA => true,
+        // Evita que busque una ruta de certificado estricta local
+        PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+    ];
+
+    $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
+    $conexion = new PDO($dsn, $user, $pass, $options);
+    $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+} catch (PDOException $e) {
+    die("No se pudo conectar a la base de datos: " . $e->getMessage());
 }
 
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }

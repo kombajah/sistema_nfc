@@ -8,11 +8,11 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 if (file_exists(__DIR__ . '/config.local.php')) require __DIR__ . '/config.local.php';
 
 // Obtener variables de entorno (soporta getenv y $_ENV)
-$host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? '');
+$host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? 'mysql-sistema-nfc-sistema-nfc.d.aivencloud.com');
 $port = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '18347');
-$db   = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? '');
-$user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? '');
-$pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? '');
+$db   = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'sistema_nfc');
+$user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'avnadmin');
+$pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? 'AVNS_BRrEC3htryct3nJ2wUl');
 
 try {
     $options = [

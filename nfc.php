@@ -54,41 +54,118 @@ $cats = $conn->query("SELECT * FROM categorias");
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script>
 let ndef = null, qr = null, ocupado = false;
+
 function seleccionarPunto(v, el){
-  document.querySelectorAll('.btn-punto').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active'); document.getElementById('input_puntos').value = v;
+  document.querySelectorAll('.btn-punto').forEach(b => b.classList.remove('active'));
+  el.classList.add('active'); 
+  document.getElementById('input_puntos').value = v;
 }
-function validar(){ if(!document.getElementById('input_puntos').value){ alert('Selecciona 1, 2 o 3 puntos'); return false; } return true; }
+
+function validar(){ 
+  if(!document.getElementById('input_puntos').value){ 
+    alert('Selecciona 1, 2 o 3 puntos'); 
+    return false; 
+  } 
+  return true; 
+}
+
 async function cargar(codigo){
-  if (ocupado) return false; ocupado = true;
+  if (ocupado) return false; 
+  ocupado = true;
   try {
     const r = await fetch("buscar_alumno.php?uid=" + encodeURIComponent(codigo));
     const d = await r.json();
     if (d.error) { alert(d.error); return false; }
+    
+    // Detener la cámara si estaba activa
+    await detenerQR();
+
     document.getElementById('estadoNFC').style.display = "none";
     document.getElementById('formPuntos').style.display = "block";
     document.getElementById('nombreAlumnoDisplay').innerText = d.nombre;
     document.getElementById('cursoDisplay').innerText = "Curso: " + d.curso + " · " + d.asignatura;
     document.getElementById('alumno_id_input').value = d.id;
     return true;
-  } finally { ocupado = false; }
+  } catch(e) {
+    alert("Error al consultar el alumno.");
+    return false;
+  } finally { 
+    ocupado = false; 
+  }
 }
+
 async function iniciarEscaneo(){
-  if (!("NDEFReader" in window)) { alert("Web NFC requiere Chrome en Android y HTTPS. Usa el lector QR."); return; }
+  await detenerQR();
+  if (!("NDEFReader" in window)) { 
+    alert("Web NFC requiere Chrome en Android y conexión HTTPS. Usa el lector QR."); 
+    return; 
+  }
   try {
-    if (!ndef) { ndef = new NDEFReader(); ndef.addEventListener("reading", ({serialNumber}) => cargar(serialNumber)); }
+    if (!ndef) { 
+      ndef = new NDEFReader(); 
+      ndef.addEventListener("reading", ({serialNumber}) => cargar(serialNumber)); 
+    }
     await ndef.scan();
     document.getElementById('estado').innerText = "Escaneando... acerca la tarjeta ahora.";
-  } catch(e){ alert("Error al iniciar NFC: " + e); }
+  } catch(e){ 
+    alert("Error al iniciar NFC: " + e); 
+  }
 }
+
 async function iniciarQR(){
-  if (typeof Html5Qrcode === 'undefined') { alert("No se pudo cargar el lector QR."); return; }
-  const box = document.getElementById('lectorQR'); box.style.display = 'block';
+  if (typeof Html5Qrcode === 'undefined') { 
+    alert("No se pudo cargar la librería QR."); 
+    return; 
+  }
+
+  // Detener y limpiar cualquier instancia previa activa
+  await detenerQR();
+
+  const box = document.getElementById('lectorQR');
+  box.style.display = 'block';
+
   try {
     qr = new Html5Qrcode('lectorQR');
-    await qr.start({facingMode:'environment'}, {fps:10, qrbox:220}, async txt => {
-      if (await cargar(txt)) { await qr.stop(); box.style.display = 'none'; }
-    });
-  } catch(e){ box.style.display='none'; alert("No se pudo abrir la cámara (requiere HTTPS y permiso): " + e); }
+
+    // Cálculo dinámico del tamaño del cuadro QR para evitar errores en móviles
+    const qrBoxCalc = (viewfinderWidth, viewfinderHeight) => {
+      const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+      return { width: Math.floor(minEdge * 0.7), height: Math.floor(minEdge * 0.7) };
+    };
+
+    const config = { fps: 10, qrbox: qrBoxCalc, aspectRatio: 1.0 };
+
+    const onSuccess = async (txt) => {
+      await cargar(txt);
+    };
+
+    // Intentar abrir con el modo de cámara trasera estándar
+    try {
+      await qr.start({ facingMode: "environment" }, config, onSuccess);
+    } catch (errFacing) {
+      // Fallback: listar las cámaras disponibles y seleccionar la trasera explícitamente
+      const cameras = await Html5Qrcode.getCameras();
+      if (cameras && cameras.length > 0) {
+        const camId = cameras[cameras.length - 1].id; // La última cámara suele ser la trasera
+        await qr.start(camId, config, onSuccess);
+      } else {
+        throw errFacing;
+      }
+    }
+  } catch(e) {
+    box.style.display = 'none';
+    alert("No se pudo abrir la cámara. Asegúrate de otorgar permisos de cámara en tu navegador móvil.");
+  }
 }
-</script></body></html>
+
+async function detenerQR() {
+  const box = document.getElementById('lectorQR');
+  if (qr) {
+    try { await qr.stop(); } catch(e) {}
+    try { qr.clear(); } catch(e) {}
+    qr = null;
+  }
+  box.style.display = 'none';
+}
+</script>
+</body></html>

@@ -6,6 +6,6 @@
   <?= lk('historico.php','🕘 Histórico',$act) ?>
   <?= lk('contenido.php','⚙️ Contenido',$act) ?>
   <?php if (es_admin()): ?><?= lk('maestros.php','🔑 Maestros',$act) ?><?php endif; ?>
-  <a href="logout.php" class="text-white text-decoration-none small">Salir</a>
+  <a href="salir.php" class="text-white text-decoration-none small">Salir</a>
 </div>
 <div class="text-center text-white small pb-3"><?= h($_SESSION['maestro']) ?> · <?= es_admin()?'Administrador':'Docente' ?></div>

@@ -1,13 +1,13 @@
 {
-  "$schema": "https://vercel.sh",
-  "services": {
-    "web-php": {
-      "root": ".",
-      "entrypoint": "Dockerfile.vercel",
-      "runtime": "container"
+  "functions": {
+    "api/*.php": {
+      "runtime": "vercel-php@0.7.2"
     }
   },
-  "rewrites": [
-    { "source": "/(.*)", "destination": { "service": "web-php" } }
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.php"
+    }
   ]
 }

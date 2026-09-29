@@ -30,7 +30,7 @@ $cats = $conn->query("SELECT * FROM categorias");
     <p id="estado" class="text-primary"></p>
     <button class="btn btn-dark w-100 rounded-pill mb-2" onclick="iniciarEscaneo()">🛜 Escanear tarjeta NFC</button>
     <button class="btn btn-outline-dark w-100 rounded-pill" onclick="iniciarQR()">📷 Escanear código QR</button>
-    <div id="lectorQR" class="mt-3" style="display:none; max-width:320px; min-height:250px; margin:auto"></div>
+    <div id="lectorQR" class="mt-3" style="display:none; width:100%; max-width:320px; margin:auto"></div>
   </div>
   <div class="card p-4 mt-3 shadow-sm" id="formPuntos" style="display:none">
     <h5 id="nombreAlumnoDisplay" class="text-primary mb-0"></h5>
@@ -52,11 +52,10 @@ $cats = $conn->query("SELECT * FROM categorias");
   </div>
 </div>
 
-<!-- Carga de la librería html5-qrcode -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <script>
-let ndef = null, html5QrCode = null, ocupado = false;
+let ndef = null, html5QrcodeScanner = null, ocupado = false;
 
 function seleccionarPunto(v, el){
   document.querySelectorAll('.btn-punto').forEach(b => b.classList.remove('active'));
@@ -115,8 +114,8 @@ async function iniciarEscaneo(){
 }
 
 async function iniciarQR(){
-  if (typeof Html5Qrcode === 'undefined') { 
-    alert("Cargando lector QR... Inténtalo de nuevo en 2 segundos."); 
+  if (typeof Html5QrcodeScanner === 'undefined') { 
+    alert("Cargando la librería QR... Reintentando."); 
     return; 
   }
 
@@ -126,40 +125,39 @@ async function iniciarQR(){
   box.style.display = 'block';
 
   try {
-    html5QrCode = new Html5Qrcode("lectorQR");
-    
-    const config = { 
-      fps: 10, 
-      qrbox: { width: 220, height: 220 } 
-    };
+    // Uso del componente nativo UI de Html5QrcodeScanner
+    html5QrcodeScanner = new Html5QrcodeScanner(
+      "lectorQR", 
+      { 
+        fps: 10, 
+        qrbox: { width: 220, height: 220 },
+        rememberLastUsedCamera: true,
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+      }, 
+      /* verbose= */ false
+    );
 
-    // Solicita la cámara trasera de forma directa e inmediata
-    await html5QrCode.start(
-      { facingMode: "environment" },
-      config,
+    html5QrcodeScanner.render(
       async (decodedText) => {
         await cargar(decodedText);
       },
-      (errorMessage) => {
-        // Ignorar errores por cada fotograma que no detecte QR
+      (error) => {
+        // Errores por fotograma sin detección
       }
     );
-  } catch (e) {
+  } catch(e) {
     box.style.display = 'none';
-    alert("No se pudo iniciar la cámara (" + (e.message || e) + "). Revisa que Chrome tenga permisos de Cámara habilitados.");
+    alert("Error al inicializar el escáner: " + (e.message || e));
   }
 }
 
 async function detenerQR() {
   const box = document.getElementById('lectorQR');
-  if (html5QrCode) {
+  if (html5QrcodeScanner) {
     try {
-      if (html5QrCode.isScanning) {
-        await html5QrCode.stop();
-      }
+      await html5QrcodeScanner.clear();
     } catch(e) {}
-    try { html5QrCode.clear(); } catch(e) {}
-    html5QrCode = null;
+    html5QrcodeScanner = null;
   }
   box.style.display = 'none';
 }

@@ -9,9 +9,9 @@ if (file_exists(__DIR__ . '/config.local.php')) require __DIR__ . '/config.local
 
 $DB_HOST = getenv('DB_HOST') ?: 'mysql-sistema-nfc-sistema-nfc.d.aivencloud.com';
 $DB_PORT = (int)(getenv('DB_PORT') ?: 18347);
-$DB_NAME = getenv('DB_NAME') ?: 'defaultdb';
+$DB_NAME = getenv('DB_NAME') ?: 'sistema_nfc';
 $DB_USER = getenv('DB_USER') ?: 'avnadmin';
-$DB_PASS = getenv('DB_PASS') ?: '';
+$DB_PASS = getenv('DB_PASS') ?: 'AVNS_BRrEC3htryct3nJ2wUl';
 $DB_CA   = __DIR__ . '/certs/ca.pem';
 
 try {

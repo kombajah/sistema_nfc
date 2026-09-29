@@ -51,9 +51,12 @@ $cats = $conn->query("SELECT * FROM categorias");
     </form>
   </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+<!-- Carga de la librería html5-qrcode -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
 <script>
-let ndef = null, qr = null, ocupado = false;
+let ndef = null, html5QrCode = null, ocupado = false;
 
 function seleccionarPunto(v, el){
   document.querySelectorAll('.btn-punto').forEach(b => b.classList.remove('active'));
@@ -113,7 +116,7 @@ async function iniciarEscaneo(){
 
 async function iniciarQR(){
   if (typeof Html5Qrcode === 'undefined') { 
-    alert("No se cargó la librería de código QR. Comprueba tu conexión."); 
+    alert("Cargando lector QR... Inténtalo de nuevo en 2 segundos."); 
     return; 
   }
 
@@ -122,62 +125,44 @@ async function iniciarQR(){
   const box = document.getElementById('lectorQR');
   box.style.display = 'block';
 
-  // Permiso explícito de la cámara en el navegador
   try {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      const testStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      testStream.getTracks().forEach(track => track.stop());
-    }
-  } catch(errPermiso) {
-    box.style.display = 'none';
-    alert("Permiso de cámara denegado o no disponible: " + (errPermiso.message || errPermiso));
-    return;
-  }
-
-  // Inicialización del lector
-  try {
-    qr = new Html5Qrcode('lectorQR');
-
+    html5QrCode = new Html5Qrcode("lectorQR");
+    
     const config = { 
       fps: 10, 
-      qrbox: { width: 220, height: 220 },
-      aspectRatio: 1.0
+      qrbox: { width: 220, height: 220 } 
     };
 
-    const onSuccess = async (txt) => {
-      await cargar(txt);
-    };
-
-    const onErrorFrame = (err) => {};
-
-    try {
-      await qr.start({ facingMode: "environment" }, config, onSuccess, onErrorFrame);
-    } catch (errFacing) {
-      const cameras = await Html5Qrcode.getCameras();
-      if (cameras && cameras.length > 0) {
-        const camId = cameras[cameras.length - 1].id;
-        await qr.start(camId, config, onSuccess, onErrorFrame);
-      } else {
-        throw new Error("No se encontraron cámaras activas en el dispositivo.");
+    // Solicita la cámara trasera de forma directa e inmediata
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      config,
+      async (decodedText) => {
+        await cargar(decodedText);
+      },
+      (errorMessage) => {
+        // Ignorar errores por cada fotograma que no detecte QR
       }
-    }
-  } catch(e) {
-    await detenerQR();
-    alert("Error al desplegar la cámara: " + (e.message || e));
+    );
+  } catch (e) {
+    box.style.display = 'none';
+    alert("No se pudo iniciar la cámara (" + (e.message || e) + "). Revisa que Chrome tenga permisos de Cámara habilitados.");
   }
 }
 
 async function detenerQR() {
   const box = document.getElementById('lectorQR');
-  if (qr) {
-    try { 
-      if (qr.isScanning) {
-        await qr.stop(); 
+  if (html5QrCode) {
+    try {
+      if (html5QrCode.isScanning) {
+        await html5QrCode.stop();
       }
     } catch(e) {}
-    try { qr.clear(); } catch(e) {}
-    qr = null;
+    try { html5QrCode.clear(); } catch(e) {}
+    html5QrCode = null;
   }
   box.style.display = 'none';
 }
-</script></body></html>
+</script>
+</body>
+</html>

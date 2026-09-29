@@ -1,5 +1,5 @@
 <?php
-require 'conexion.php'; 
+require_once 'conexion.php';
 requiere_login();
 
 // 1. Cargar Cursos

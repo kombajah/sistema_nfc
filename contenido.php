@@ -1,5 +1,5 @@
 <?php
-require 'conexion.php'; requiere_login();
+require_once 'conexion.php'; requiere_login();
 $mensaje=''; $error='';
 function nuevo_qr(){ return bin2hex(random_bytes(6)); }
 function es_mio_curso($conn,$cid){

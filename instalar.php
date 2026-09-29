@@ -1,6 +1,6 @@
 <?php
 // Ejecutar UNA vez y luego borrar. Crea el administrador inicial.
-require 'conexion.php';
+require_once 'conexion.php';
 $n = $conn->query("SELECT COUNT(*) c FROM maestros")->fetch_assoc()['c'];
 if ($n > 0) die("Ya existe al menos un maestro. Borra este archivo.");
 $u = "admin"; $p = password_hash("1234", PASSWORD_DEFAULT);

@@ -1,5 +1,5 @@
 <?php
-require 'conexion.php'; requiere_login();
+require_once 'conexion.php'; requiere_login();
 $types=''; $vals=[];
 $sqlC = "SELECT c.id, c.nombre FROM cursos c WHERE 1=1"; filtro_docente($sqlC,$types,$vals,'c');
 $s=$conn->prepare($sqlC." ORDER BY c.nombre"); if($vals) $s->bind_param($types,...$vals); $s->execute();

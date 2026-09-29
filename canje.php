@@ -1,5 +1,6 @@
 <?php
-require 'conexion.php'; requiere_login();
+require_once 'conexion.php';
+requiere_login();
 $mensaje = ''; $error = '';
 function tasa($conn){ $r=$conn->query("SELECT valor FROM config WHERE clave='tasa_canje'")->fetch_assoc(); return max(1,(int)($r['valor']??10)); }
 function alumno_permitido($conn,$id){

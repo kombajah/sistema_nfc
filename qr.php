@@ -1,5 +1,5 @@
 <?php
-require 'conexion.php'; requiere_login();
+require_once 'conexion.php'; requiere_login();
 $cid = (int)($_GET['curso'] ?? 0);
 $s = $conn->prepare("SELECT c.nombre curso, c.docente_id, ag.nombre asignatura FROM cursos c JOIN asignaturas ag ON ag.id=c.asignatura_id WHERE c.id=?");
 $s->bind_param("i",$cid); $s->execute(); $curso = $s->get_result()->fetch_assoc();

@@ -28,7 +28,11 @@ try {
     die("No se pudo conectar a la base de datos: " . $e->getMessage());
 }
 
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+if (!function_exists('h')) {
+    function h($s) { 
+        return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); 
+    }
+}
 
 // --- Manejador de Sesiones en Base de Datos ---
 class SesionBD implements SessionHandlerInterface {

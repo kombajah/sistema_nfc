@@ -1,5 +1,5 @@
 <?php
-require 'conexion.php'; requiere_login();
+require_once 'conexion.php'; requiere_login();
 if (!es_admin()) { http_response_code(403); die("Solo el administrador puede gestionar maestros."); }
 $mensaje=''; $error='';
 if ($_SERVER["REQUEST_METHOD"]=="POST") {

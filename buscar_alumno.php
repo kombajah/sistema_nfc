@@ -1,5 +1,5 @@
 <?php
-require 'conexion.php';
+require_once 'conexion.php';
 iniciar_sesion();
 header('Content-Type: application/json');
 if (!isset($_SESSION['maestro'])) { http_response_code(403); echo json_encode(['error'=>'No autorizado']); exit; }

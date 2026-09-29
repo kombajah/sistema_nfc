@@ -1,5 +1,5 @@
 <?php
-require 'conexion.php';
+require_once 'conexion.php';
 iniciar_sesion();
 
 if (!empty($_SESSION['maestro'])) {

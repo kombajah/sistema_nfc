@@ -1,5 +1,5 @@
 <?php
-require 'conexion.php'; requiere_login();
+require_once 'conexion.php'; requiere_login();
 $mensaje = ''; $error = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['asignar_puntos'])) {
   $alumno = (int)($_POST['alumno_id'] ?? 0);

@@ -30,7 +30,7 @@ $cats = $conn->query("SELECT * FROM categorias");
     <p id="estado" class="text-primary"></p>
     <button class="btn btn-dark w-100 rounded-pill mb-2" onclick="iniciarEscaneo()">🛜 Escanear tarjeta NFC</button>
     <button class="btn btn-outline-dark w-100 rounded-pill" onclick="iniciarQR()">📷 Escanear código QR</button>
-    <div id="lectorQR" class="mt-3" style="display:none;max-width:320px;margin:auto"></div>
+    <div id="lectorQR" class="mt-3" style="display:none; max-width:320px; min-height:250px; margin:auto"></div>
   </div>
   <div class="card p-4 mt-3 shadow-sm" id="formPuntos" style="display:none">
     <h5 id="nombreAlumnoDisplay" class="text-primary mb-0"></h5>
@@ -77,7 +77,6 @@ async function cargar(codigo){
     const d = await r.json();
     if (d.error) { alert(d.error); return false; }
     
-    // Detener la cámara si estaba activa
     await detenerQR();
 
     document.getElementById('estadoNFC').style.display = "none";
@@ -87,7 +86,7 @@ async function cargar(codigo){
     document.getElementById('alumno_id_input').value = d.id;
     return true;
   } catch(e) {
-    alert("Error al consultar el alumno.");
+    alert("Error al consultar el alumno: " + (e.message || e));
     return false;
   } finally { 
     ocupado = false; 
@@ -97,7 +96,7 @@ async function cargar(codigo){
 async function iniciarEscaneo(){
   await detenerQR();
   if (!("NDEFReader" in window)) { 
-    alert("Web NFC requiere Chrome en Android y conexión HTTPS. Usa el lector QR."); 
+    alert("Web NFC requiere Chrome en Android y HTTPS. Usa el lector QR."); 
     return; 
   }
   try {
@@ -108,64 +107,77 @@ async function iniciarEscaneo(){
     await ndef.scan();
     document.getElementById('estado').innerText = "Escaneando... acerca la tarjeta ahora.";
   } catch(e){ 
-    alert("Error al iniciar NFC: " + e); 
+    alert("Error al iniciar NFC: " + (e.message || e)); 
   }
 }
 
 async function iniciarQR(){
   if (typeof Html5Qrcode === 'undefined') { 
-    alert("No se pudo cargar la librería QR."); 
+    alert("No se cargó la librería de código QR. Comprueba tu conexión."); 
     return; 
   }
 
-  // Detener y limpiar cualquier instancia previa activa
   await detenerQR();
 
   const box = document.getElementById('lectorQR');
   box.style.display = 'block';
 
+  // Permiso explícito de la cámara en el navegador
+  try {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      const testStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      testStream.getTracks().forEach(track => track.stop());
+    }
+  } catch(errPermiso) {
+    box.style.display = 'none';
+    alert("Permiso de cámara denegado o no disponible: " + (errPermiso.message || errPermiso));
+    return;
+  }
+
+  // Inicialización del lector
   try {
     qr = new Html5Qrcode('lectorQR');
 
-    // Cálculo dinámico del tamaño del cuadro QR para evitar errores en móviles
-    const qrBoxCalc = (viewfinderWidth, viewfinderHeight) => {
-      const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-      return { width: Math.floor(minEdge * 0.7), height: Math.floor(minEdge * 0.7) };
+    const config = { 
+      fps: 10, 
+      qrbox: { width: 220, height: 220 },
+      aspectRatio: 1.0
     };
-
-    const config = { fps: 10, qrbox: qrBoxCalc, aspectRatio: 1.0 };
 
     const onSuccess = async (txt) => {
       await cargar(txt);
     };
 
-    // Intentar abrir con el modo de cámara trasera estándar
+    const onErrorFrame = (err) => {};
+
     try {
-      await qr.start({ facingMode: "environment" }, config, onSuccess);
+      await qr.start({ facingMode: "environment" }, config, onSuccess, onErrorFrame);
     } catch (errFacing) {
-      // Fallback: listar las cámaras disponibles y seleccionar la trasera explícitamente
       const cameras = await Html5Qrcode.getCameras();
       if (cameras && cameras.length > 0) {
-        const camId = cameras[cameras.length - 1].id; // La última cámara suele ser la trasera
-        await qr.start(camId, config, onSuccess);
+        const camId = cameras[cameras.length - 1].id;
+        await qr.start(camId, config, onSuccess, onErrorFrame);
       } else {
-        throw errFacing;
+        throw new Error("No se encontraron cámaras activas en el dispositivo.");
       }
     }
   } catch(e) {
-    box.style.display = 'none';
-    alert("No se pudo abrir la cámara. Asegúrate de otorgar permisos de cámara en tu navegador móvil.");
+    await detenerQR();
+    alert("Error al desplegar la cámara: " + (e.message || e));
   }
 }
 
 async function detenerQR() {
   const box = document.getElementById('lectorQR');
   if (qr) {
-    try { await qr.stop(); } catch(e) {}
+    try { 
+      if (qr.isScanning) {
+        await qr.stop(); 
+      }
+    } catch(e) {}
     try { qr.clear(); } catch(e) {}
     qr = null;
   }
   box.style.display = 'none';
 }
-</script>
-</body></html>
+</script></body></html>

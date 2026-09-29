@@ -23,9 +23,14 @@ $cats = $conexion->query("SELECT * FROM categorias ORDER BY id")->fetchAll(PDO::
 
 $filtro = (int)($_GET['curso'] ?? 0);
 
-// 3. Cargar Alumnos y Puntos
+// 3. Cargar Alumnos y Puntos (Consulta corregida para compatibilidad estricta SQL)
 $vals = [];
-$sql = "SELECT a.id, a.nombre alumno, c.nombre curso, ag.nombre asignatura, r.categoria_id, SUM(r.puntos) pts
+$sql = "SELECT a.id, 
+               MAX(a.nombre) AS alumno, 
+               MAX(c.nombre) AS curso, 
+               MAX(ag.nombre) AS asignatura, 
+               r.categoria_id, 
+               SUM(COALESCE(r.puntos, 0)) AS pts
         FROM alumnos a 
         JOIN cursos c ON a.curso_id = c.id 
         JOIN asignaturas ag ON ag.id = c.asignatura_id
@@ -42,19 +47,19 @@ if ($filtro) {
     $vals[] = $filtro; 
 }
 
-$sql .= " GROUP BY a.id, a.nombre, c.nombre, ag.nombre, r.categoria_id ORDER BY c.nombre, a.nombre";
+$sql .= " GROUP BY a.id, r.categoria_id ORDER BY curso, alumno";
 $s = $conexion->prepare($sql);
 $s->execute($vals);
 $resultados = $s->fetchAll(PDO::FETCH_ASSOC);
 
 $filas = [];
 foreach ($resultados as $r) {
-  $id = $r['id'];
-  $filas[$id] ??= ['alumno'=>$r['alumno'], 'curso'=>$r['curso'], 'asignatura'=>$r['asignatura'], 'cat'=>[], 'total'=>0];
-  if ($r['categoria_id']) { 
-      $filas[$id]['cat'][$r['categoria_id']] = (int)$r['pts']; 
-      $filas[$id]['total'] += (int)$r['pts']; 
-  }
+    $id = $r['id'];
+    $filas[$id] ??= ['alumno'=>$r['alumno'], 'curso'=>$r['curso'], 'asignatura'=>$r['asignatura'], 'cat'=>[], 'total'=>0];
+    if ($r['categoria_id']) { 
+        $filas[$id]['cat'][$r['categoria_id']] = (int)$r['pts']; 
+        $filas[$id]['total'] += (int)$r['pts']; 
+    }
 }
 
 // 4. Cargar Canjes

@@ -1,4 +1,9 @@
 <?php
+// --- Habilitar visualización de errores (Depuración) ---
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // Cargar archivo local de pruebas si existe
 if (file_exists(__DIR__ . '/config.local.php')) {
     require __DIR__ . '/config.local.php';
@@ -69,7 +74,9 @@ class SesionBD implements SessionHandlerInterface {
 function iniciar_sesion(){
     global $conexion;
     if (session_status() === PHP_SESSION_NONE) {
-        session_set_save_handler(new SesionBD($conexion), true);
+        if ($conexion) {
+            session_set_save_handler(new SesionBD($conexion), true);
+        }
         session_start();
     }
 }
@@ -90,10 +97,9 @@ function docente_id(){
     return (int)($_SESSION['id'] ?? 0); 
 }
 
-function filtro_docente(&$sql, &$types, &$vals, $alias='c'){
+function filtro_docente(&$sql, &$vals, $alias='c'){
     if (!es_admin()) { 
         $sql .= " AND $alias.docente_id = ?"; 
-        $types .= 'i'; 
         $vals[] = docente_id(); 
     }
 }

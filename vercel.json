@@ -1,14 +1,16 @@
 {
   "builds": [
-    {
-      "src": "*.php",
-      "use": "vercel-php@0.7.4"
-    }
+    { "src": "index.php", "use": "vercel-php@0.7.4" },
+    { "src": "contenido.php", "use": "vercel-php@0.7.4" },
+    { "src": "reporte.php", "use": "vercel-php@0.7.4" },
+    { "src": "canje.php", "use": "vercel-php@0.7.4" },
+    { "src": "historico.php", "use": "vercel-php@0.7.4" },
+    { "src": "nfc.php", "use": "vercel-php@0.7.4" },
+    { "src": "maestros.php", "use": "vercel-php@0.7.4" },
+    { "src": "buscar_alumno.php", "use": "vercel-php@0.7.4" },
+    { "src": "qr.php", "use": "vercel-php@0.7.4" }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }

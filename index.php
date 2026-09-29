@@ -2,9 +2,9 @@
 require 'conexion.php';
 iniciar_sesion();
 
-if (isset($_SESSION['maestro'])) { 
-    header("Location: reporte.php"); 
-    exit; 
+if (!empty($_SESSION['maestro'])) {
+    header("Location: reporte.php");
+    exit;
 }
 
 $error = '';

@@ -1,8 +1,6 @@
 <?php
-// --- Depuración de errores ---
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+require 'conexion.php';
+requiere_login(); // Si empty($_SESSION['maestro']), redirige a index.php
 
 // Cargar archivo local de pruebas si existe
 if (file_exists(__DIR__ . '/config.local.php')) {
